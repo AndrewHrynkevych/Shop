@@ -1,0 +1,64 @@
+<%- include('partials/header') %>
+<h1 data-testid="page-title">Кошик</h1>
+<% if (!summary.items.length) { %>
+  <div class="empty" data-testid="empty-cart">
+    <p>Ваш кошик порожній.</p>
+    <a href="/catalog" class="btn" data-testid="continue-shopping">Перейти до покупок</a>
+  </div>
+<% } else { %>
+<div class="cart-layout">
+  <section>
+    <table class="cart-table" data-testid="cart-table">
+      <thead><tr><th>Товар</th><th>Ціна</th><th>Кількість</th><th>Сума</th><th></th></tr></thead>
+      <tbody>
+      <% summary.items.forEach(i => { %>
+        <tr data-testid="cart-item" data-product-id="<%= i.product.id %>">
+          <td><a href="/product/<%= i.product.id %>" data-testid="cart-item-name"><%= i.product.name %></a></td>
+          <td data-testid="cart-item-price" data-price="<%= i.product.price %>"><%= formatPrice(i.product.price) %></td>
+          <td>
+            <form method="post" action="/cart/update" class="qty-form">
+              <input type="hidden" name="productId" value="<%= i.product.id %>">
+              <input type="number" name="qty" value="<%= i.qty %>" min="0" max="<%= Math.min(i.product.stock, 10) %>" aria-label="Кількість <%= i.product.name %>" data-testid="cart-item-qty" class="auto-submit">
+              <noscript><button type="submit">Оновити</button></noscript>
+            </form>
+          </td>
+          <td data-testid="cart-item-total" data-price="<%= i.lineTotal %>"><%= formatPrice(i.lineTotal) %></td>
+          <td>
+            <form method="post" action="/cart/remove"><input type="hidden" name="productId" value="<%= i.product.id %>">
+              <button type="submit" class="link danger" aria-label="Видалити <%= i.product.name %>" data-testid="cart-item-remove">Видалити</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <form method="post" action="/cart/clear" class="confirm" data-confirm="Очистити кошик?">
+      <button type="submit" class="link danger" data-testid="clear-cart">Очистити кошик</button>
+    </form>
+  </section>
+  <aside class="summary" data-testid="cart-summary">
+    <h2>Разом</h2>
+    <% if (summary.promo) { %>
+      <div class="promo-applied" data-testid="promo-applied">
+        Промокод <b data-testid="promo-code"><%= summary.promo.code %></b> — <%= summary.promo.label %>
+        <form method="post" action="/cart/promo/remove" class="inline"><button type="submit" class="link" data-testid="promo-remove">Скасувати</button></form>
+      </div>
+    <% } else { %>
+      <% if (summary.promoError) { %><p class="field-error" data-testid="promo-invalid">Промокод більше не діє: <%= summary.promoError %></p><% } %>
+      <form method="post" action="/cart/promo" class="promo-form" data-testid="promo-form">
+        <input type="text" name="code" placeholder="Промокод" aria-label="Промокод" data-testid="promo-input">
+        <button type="submit" data-testid="promo-apply">Застосувати</button>
+      </form>
+    <% } %>
+    <dl>
+      <dt>Товарів:</dt><dd data-testid="summary-count"><%= summary.count %></dd>
+      <dt>Сума:</dt><dd data-testid="summary-subtotal" data-price="<%= summary.subtotal %>"><%= formatPrice(summary.subtotal) %></dd>
+      <% if (summary.discount) { %><dt>Знижка:</dt><dd data-testid="summary-discount" data-price="<%= summary.discount %>">−<%= formatPrice(summary.discount) %></dd><% } %>
+      <dt class="total">До сплати:</dt><dd class="total" data-testid="summary-total" data-price="<%= summary.total %>"><%= formatPrice(summary.total) %></dd>
+    </dl>
+    <p class="muted">Вартість доставки розраховується під час оформлення.</p>
+    <a href="/checkout" class="btn block" data-testid="checkout-button">Оформити замовлення</a>
+  </aside>
+</div>
+<% } %>
+<%- include('partials/footer') %>

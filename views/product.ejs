@@ -1,0 +1,82 @@
+<%- include('partials/header') %>
+<nav class="breadcrumbs" aria-label="Навігація" data-testid="breadcrumbs">
+  <a href="/">Головна</a> / <a href="/catalog?category=<%= category.slug %>"><%= category.name %></a> / <span><%= product.name %></span>
+</nav>
+<div class="product" data-testid="product-details" data-product-id="<%= product.id %>">
+  <div class="product-img"><img src="/img/product/<%= product.id %>.svg" alt="<%= product.name %>" width="400" height="300"></div>
+  <div class="product-info">
+    <h1 data-testid="product-title"><%= product.name %></h1>
+    <div class="card-meta">
+      <span data-testid="product-brand"><%= product.brand %></span> ·
+      <span data-testid="product-sku"><%= product.sku %></span> ·
+      <span data-testid="product-rating">★ <%= product.rating.toFixed(1) %></span> ·
+      <a href="#reviews" data-testid="reviews-count">Відгуків: <%= reviews.length %></a>
+    </div>
+    <div class="price-row big">
+      <span class="price" data-testid="product-price" data-price="<%= product.price %>"><%= formatPrice(product.price) %></span>
+      <% if (product.oldPrice) { %><s class="old-price" data-testid="product-old-price"><%= formatPrice(product.oldPrice) %></s><% } %>
+    </div>
+    <% if (product.stock > 5) { %>
+      <p class="stock in" data-testid="stock-status">✔ В наявності</p>
+    <% } else if (product.stock > 0) { %>
+      <p class="stock low" data-testid="stock-status">Закінчується: залишилось <%= product.stock %> шт.</p>
+    <% } else { %>
+      <p class="stock out" data-testid="stock-status">Немає в наявності</p>
+    <% } %>
+    <% if (product.stock > 0) { %>
+      <form class="buy-form" action="/cart/add" method="post" data-testid="add-to-cart-form">
+        <input type="hidden" name="productId" value="<%= product.id %>">
+        <div class="qty">
+          <button type="button" class="qty-btn" data-action="dec" aria-label="Зменшити кількість" data-testid="qty-decrease">−</button>
+          <input type="number" name="qty" value="1" min="1" max="<%= Math.min(product.stock, 10) %>" aria-label="Кількість" data-testid="qty-input">
+          <button type="button" class="qty-btn" data-action="inc" aria-label="Збільшити кількість" data-testid="qty-increase">+</button>
+        </div>
+        <button type="submit" class="add-to-cart" data-product-id="<%= product.id %>" data-testid="add-to-cart">Додати до кошика</button>
+      </form>
+      <% if (inCartQty) { %><p class="muted" data-testid="in-cart-note">У кошику вже <%= inCartQty %> шт. <a href="/cart">Перейти до кошика</a></p><% } %>
+    <% } else { %>
+      <button type="button" disabled data-testid="out-of-stock">Немає в наявності</button>
+    <% } %>
+  </div>
+</div>
+
+<div class="tabs" data-testid="product-tabs" data-open="<%= typeof openTab !== 'undefined' ? openTab : 'description' %>">
+  <div role="tablist">
+    <button role="tab" type="button" data-tab="description" data-testid="tab-description">Опис</button>
+    <button role="tab" type="button" data-tab="specs" data-testid="tab-specs">Характеристики</button>
+    <button role="tab" type="button" data-tab="reviews" data-testid="tab-reviews">Відгуки (<%= reviews.length %>)</button>
+  </div>
+  <section role="tabpanel" data-panel="description" data-testid="panel-description"><p><%= product.description %></p></section>
+  <section role="tabpanel" data-panel="specs" data-testid="panel-specs" hidden>
+    <table class="specs"><% Object.entries(product.specs).forEach(([k, v]) => { %><tr><th><%= k %></th><td><%= v %></td></tr><% }) %></table>
+  </section>
+  <section role="tabpanel" data-panel="reviews" id="reviews" data-testid="panel-reviews" hidden>
+    <% if (!reviews.length) { %><p data-testid="no-reviews">Відгуків ще немає. Будьте першим!</p><% } %>
+    <ul class="reviews"><% reviews.forEach(r => { %>
+      <li data-testid="review"><b data-testid="review-author"><%= r.author %></b> <span data-testid="review-rating"><%= '★'.repeat(r.rating) %><%= '☆'.repeat(5 - r.rating) %></span> <small><%= formatDate(r.createdAt) %></small><p data-testid="review-text"><%= r.text %></p></li>
+    <% }) %></ul>
+    <% if (user) { %>
+      <form method="post" action="/product/<%= product.id %>/reviews" class="form" novalidate data-testid="review-form">
+        <h3>Залишити відгук</h3>
+        <label for="review-rating">Оцінка</label>
+        <select id="review-rating" name="rating" data-testid="review-rating-select">
+          <option value="">Оберіть оцінку</option>
+          <% [5,4,3,2,1].forEach(n => { %><option value="<%= n %>" <%= String(reviewForm.rating) === String(n) ? 'selected' : '' %>><%= n %></option><% }) %>
+        </select>
+        <% if (reviewErrors.rating) { %><p class="field-error" data-testid="error-rating"><%= reviewErrors.rating %></p><% } %>
+        <label for="review-text">Текст відгуку</label>
+        <textarea id="review-text" name="text" rows="4" data-testid="review-text-input"><%= reviewForm.text || '' %></textarea>
+        <% if (reviewErrors.text) { %><p class="field-error" data-testid="error-text"><%= reviewErrors.text %></p><% } %>
+        <button type="submit" data-testid="review-submit">Надіслати відгук</button>
+      </form>
+    <% } else { %>
+      <p data-testid="review-login-hint"><a href="/login?next=/product/<%= product.id %>">Увійдіть</a>, щоб залишити відгук.</p>
+    <% } %>
+  </section>
+</div>
+
+<section data-testid="related-products">
+  <h2>Схожі товари</h2>
+  <div class="grid"><% related.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+</section>
+<%- include('partials/footer') %>

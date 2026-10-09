@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+<div class="auth-box">
+  <h1 data-testid="page-title">Реєстрація</h1>
+  <form method="post" action="/register" class="form" novalidate data-testid="register-form">
+    <%- include('partials/field', { name: 'name', label: "Ім'я", autocomplete: 'name' }) %>
+    <%- include('partials/field', { name: 'email', label: 'Email', type: 'email', autocomplete: 'email' }) %>
+    <%- include('partials/field', { name: 'phone', label: 'Телефон (необов\'язково)', type: 'tel', placeholder: '+380XXXXXXXXX' }) %>
+    <div class="field <%= errors.password ? 'has-error' : '' %>">
+      <label for="f-password">Пароль</label>
+      <div class="password-wrap">
+        <input id="f-password" name="password" type="password" autocomplete="new-password" data-testid="input-password">
+        <button type="button" class="link toggle-password" data-target="f-password" data-testid="toggle-password">Показати</button>
+      </div>
+      <div class="strength" data-testid="password-strength" aria-live="polite"></div>
+      <% if (errors.password) { %><p class="field-error" data-testid="error-password"><%= errors.password %></p><% } %>
+    </div>
+    <div class="field <%= errors.confirmPassword ? 'has-error' : '' %>">
+      <label for="f-confirmPassword">Підтвердіть пароль</label>
+      <input id="f-confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" data-testid="input-confirmPassword">
+      <% if (errors.confirmPassword) { %><p class="field-error" data-testid="error-confirmPassword"><%= errors.confirmPassword %></p><% } %>
+    </div>
+    <label class="checkbox"><input type="checkbox" name="newsletter" value="1" <%= form.newsletter ? 'checked' : '' %> data-testid="input-newsletter"> Підписатися на розсилку</label>
+    <label class="checkbox"><input type="checkbox" name="terms" value="1" <%= form.terms ? 'checked' : '' %> data-testid="input-terms"> Я погоджуюся з умовами використання</label>
+    <% if (errors.terms) { %><p class="field-error" data-testid="error-terms"><%= errors.terms %></p><% } %>
+    <button type="submit" class="btn block" data-testid="register-submit">Зареєструватися</button>
+  </form>
+  <p>Вже маєте обліковий запис? <a href="/login" data-testid="go-login">Увійти</a></p>
+</div>
+<%- include('partials/footer') %>

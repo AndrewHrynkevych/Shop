@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+<h1 data-testid="page-title">Мої замовлення</h1>
+<nav class="tabs-nav"><a href="/account" data-testid="account-profile-tab">Профіль</a> <a href="/account/orders" class="active" data-testid="account-orders-tab">Мої замовлення</a></nav>
+<% if (!orders.length) { %>
+  <div class="empty" data-testid="no-orders"><p>У вас ще немає замовлень.</p><a href="/catalog" class="btn">До каталогу</a></div>
+<% } else { %>
+<table class="orders-table" data-testid="orders-table">
+  <thead><tr><th>№</th><th>Дата</th><th>Товарів</th><th>Сума</th><th>Статус</th><th></th></tr></thead>
+  <tbody>
+  <% orders.forEach(o => { %>
+    <tr data-testid="order-row" data-order-id="<%= o.id %>">
+      <td data-testid="order-id"><%= o.id %></td>
+      <td data-testid="order-date"><%= formatDate(o.createdAt) %></td>
+      <td data-testid="order-items-count"><%= o.items.reduce((s, i) => s + i.qty, 0) %></td>
+      <td data-testid="order-total" data-price="<%= o.total %>"><%= formatPrice(o.total) %></td>
+      <td><span class="status status-<%= o.status === 'Нове' ? 'new' : o.status === 'Скасовано' ? 'cancelled' : 'done' %>" data-testid="order-status"><%= o.status %></span></td>
+      <td><a href="/account/orders/<%= o.id %>" data-testid="order-details-link">Деталі</a></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+<% } %>
+<%- include('partials/footer') %>

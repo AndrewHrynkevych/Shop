@@ -1,0 +1,76 @@
+<%- include('partials/header') %>
+<nav class="breadcrumbs" aria-label="Навігація" data-testid="breadcrumbs">
+  <a href="/">Головна</a> / <% if (category) { %><a href="/catalog">Каталог</a> / <span><%= category.name %></span><% } else { %><span>Каталог</span><% } %>
+</nav>
+<h1 data-testid="page-title"><%= title %><% if (filters.q) { %>: результати для «<%= filters.q %>»<% } %></h1>
+<div class="catalog">
+  <aside class="filters" data-testid="filters">
+    <form method="get" action="/catalog" id="filters-form" data-testid="filters-form">
+      <% if (filters.q) { %><input type="hidden" name="q" value="<%= filters.q %>"><% } %>
+      <input type="hidden" name="sort" value="<%= filters.sort %>">
+      <fieldset>
+        <legend>Категорія</legend>
+        <label><input type="radio" name="category" value="" <%= !filters.category ? 'checked' : '' %> data-testid="filter-category-all"> Усі</label>
+        <% categories.forEach(c => { %>
+          <label><input type="radio" name="category" value="<%= c.slug %>" <%= filters.category === c.slug ? 'checked' : '' %> data-testid="filter-category-<%= c.slug %>"> <%= c.name %></label>
+        <% }) %>
+      </fieldset>
+      <fieldset data-testid="filter-brands">
+        <legend>Бренд</legend>
+        <% availableBrands.forEach(b => { %>
+          <label><input type="checkbox" name="brand" value="<%= b %>" <%= filters.brands.includes(b) ? 'checked' : '' %> data-testid="filter-brand"> <%= b %></label>
+        <% }) %>
+      </fieldset>
+      <fieldset>
+        <legend>Ціна, грн</legend>
+        <div class="price-inputs">
+          <input type="number" name="minPrice" min="0" placeholder="від" value="<%= filters.minPrice ?? '' %>" aria-label="Мінімальна ціна" data-testid="filter-min-price">
+          <input type="number" name="maxPrice" min="0" placeholder="до" value="<%= filters.maxPrice ?? '' %>" aria-label="Максимальна ціна" data-testid="filter-max-price">
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Рейтинг</legend>
+        <select name="minRating" aria-label="Мінімальний рейтинг" data-testid="filter-rating">
+          <option value="">Будь-який</option>
+          <% [4.5, 4, 3].forEach(r => { %><option value="<%= r %>" <%= filters.minRating === r ? 'selected' : '' %>>від <%= r %> ★</option><% }) %>
+        </select>
+      </fieldset>
+      <label><input type="checkbox" name="inStock" value="1" <%= filters.inStock ? 'checked' : '' %> data-testid="filter-in-stock"> Тільки в наявності</label>
+      <label><input type="checkbox" name="onSale" value="1" <%= filters.onSale ? 'checked' : '' %> data-testid="filter-on-sale"> Зі знижкою</label>
+      <div class="filter-actions">
+        <button type="submit" data-testid="apply-filters">Застосувати</button>
+        <a href="/catalog<%= filters.q ? '?q=' + encodeURIComponent(filters.q) : '' %>" class="btn secondary" data-testid="reset-filters">Скинути</a>
+      </div>
+    </form>
+  </aside>
+  <section class="results">
+    <% errors.forEach(e => { %><div class="alert alert-error" role="alert" data-testid="filter-error"><%= e %></div><% }) %>
+    <div class="toolbar">
+      <span data-testid="results-count">Знайдено товарів: <%= total %></span>
+      <label>Сортування:
+        <select id="sort-select" data-testid="sort-select" aria-label="Сортування">
+          <% Object.entries(sorts).forEach(([k, s]) => { %><option value="<%= k %>" <%= filters.sort === k ? 'selected' : '' %>><%= s.label %></option><% }) %>
+        </select>
+      </label>
+    </div>
+    <% if (!items.length) { %>
+      <div class="empty" data-testid="no-results">
+        <p>За вашим запитом нічого не знайдено.</p>
+        <a href="/catalog" class="btn">Переглянути всі товари</a>
+      </div>
+    <% } else { %>
+      <div class="grid" data-testid="product-grid"><% items.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+    <% } %>
+    <% if (pages > 1) { %>
+      <nav class="pagination" aria-label="Сторінки" data-testid="pagination">
+        <% if (page > 1) { %><a href="<%= pageUrl(page - 1) %>" data-testid="page-prev" rel="prev">← Назад</a><% } %>
+        <% for (let i = 1; i <= pages; i++) { %>
+          <% if (i === page) { %><span class="current" aria-current="page" data-testid="page-current"><%= i %></span>
+          <% } else { %><a href="<%= pageUrl(i) %>" data-testid="page-<%= i %>"><%= i %></a><% } %>
+        <% } %>
+        <% if (page < pages) { %><a href="<%= pageUrl(page + 1) %>" data-testid="page-next" rel="next">Далі →</a><% } %>
+      </nav>
+    <% } %>
+  </section>
+</div>
+<%- include('partials/footer') %>

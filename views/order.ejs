@@ -1,0 +1,35 @@
+<%- include('partials/header') %>
+<nav class="breadcrumbs" data-testid="breadcrumbs"><a href="/account">Кабінет</a> / <a href="/account/orders">Мої замовлення</a> / <span>№<%= order.id %></span></nav>
+<h1 data-testid="page-title">Замовлення №<%= order.id %></h1>
+<p>Статус: <span class="status" data-testid="order-status"><%= order.status %></span> · Дата: <span data-testid="order-date"><%= formatDate(order.createdAt) %></span></p>
+<table class="cart-table" data-testid="order-items">
+  <thead><tr><th>Товар</th><th>Ціна</th><th>Кількість</th><th>Сума</th></tr></thead>
+  <tbody>
+  <% order.items.forEach(i => { %>
+    <tr data-testid="order-item"><td><a href="/product/<%= i.productId %>" data-testid="order-item-name"><%= i.name %></a></td><td><%= formatPrice(i.price) %></td><td data-testid="order-item-qty"><%= i.qty %></td><td><%= formatPrice(i.price * i.qty) %></td></tr>
+  <% }) %>
+  </tbody>
+</table>
+<div class="two-cols">
+  <section data-testid="order-customer">
+    <h2>Отримувач</h2>
+    <p><%= order.customer.name %><br><%= order.customer.email %><br><%= order.customer.phone %></p>
+    <p>Доставка: <span data-testid="order-delivery"><%= DELIVERY[order.delivery].label %></span><br>
+      <%= [order.customer.city, order.customer.address, order.customer.postOffice && ('відділення №' + order.customer.postOffice), order.customer.store].filter(Boolean).join(', ') %></p>
+    <p>Оплата: <span data-testid="order-payment"><%= order.payment === 'card' ? 'Картка' + (order.cardLast4 ? ' •••• ' + order.cardLast4 : '') : 'Готівка' %></span></p>
+  </section>
+  <section class="summary">
+    <dl>
+      <dt>Сума:</dt><dd data-testid="summary-subtotal"><%= formatPrice(order.subtotal) %></dd>
+      <% if (order.discount) { %><dt>Знижка (<%= order.promo %>):</dt><dd data-testid="summary-discount">−<%= formatPrice(order.discount) %></dd><% } %>
+      <dt>Доставка:</dt><dd data-testid="summary-shipping"><%= order.shipping ? formatPrice(order.shipping) : 'безкоштовно' %></dd>
+      <dt class="total">Разом:</dt><dd class="total" data-testid="summary-total" data-price="<%= order.total %>"><%= formatPrice(order.total) %></dd>
+    </dl>
+  </section>
+</div>
+<% if (order.status === 'Нове') { %>
+  <form method="post" action="/account/orders/<%= order.id %>/cancel" class="confirm" data-confirm="Скасувати замовлення №<%= order.id %>?">
+    <button type="submit" class="btn danger" data-testid="cancel-order">Скасувати замовлення</button>
+  </form>
+<% } %>
+<%- include('partials/footer') %>

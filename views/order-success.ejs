@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+<div class="success" data-testid="order-success">
+  <h1>Дякуємо за замовлення!</h1>
+  <p>Номер вашого замовлення: <b data-testid="order-number"><%= order.id %></b></p>
+  <p>Сума до сплати: <b data-testid="order-total" data-price="<%= order.total %>"><%= formatPrice(order.total) %></b></p>
+  <p>Підтвердження надіслано на <b data-testid="order-email"><%= order.customer.email %></b>.</p>
+  <p>Доставка: <span data-testid="order-delivery"><%= DELIVERY[order.delivery].label %></span></p>
+  <div class="actions">
+    <a href="/catalog" class="btn" data-testid="continue-shopping">Продовжити покупки</a>
+    <% if (user) { %><a href="/account/orders/<%= order.id %>" class="btn secondary" data-testid="view-order">Переглянути замовлення</a><% } %>
+  </div>
+</div>
+<%- include('partials/footer') %>

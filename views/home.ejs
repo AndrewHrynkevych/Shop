@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+<section class="hero" data-testid="hero">
+  <h1>Все потрібне — в одному магазині</h1>
+  <p>Безкоштовна доставка від 3 000 грн. Промокод <b>SAVE10</b> — знижка 10% на перше замовлення.</p>
+  <a class="btn" href="/catalog" data-testid="hero-cta">Перейти до каталогу</a>
+</section>
+<section data-testid="categories">
+  <h2>Категорії</h2>
+  <div class="cat-grid">
+    <% categories.forEach(c => { %>
+      <a class="cat-tile" style="--c: <%= c.color %>" href="/catalog?category=<%= c.slug %>" data-testid="category-<%= c.slug %>"><%= c.name %></a>
+    <% }) %>
+  </div>
+</section>
+<section data-testid="sale-section">
+  <h2>Акційні пропозиції</h2>
+  <div class="grid"><% sale.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+</section>
+<section data-testid="top-section">
+  <h2>Найпопулярніше</h2>
+  <div class="grid"><% top.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+</section>
+<%- include('partials/footer') %>

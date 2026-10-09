@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<h1 data-testid="page-title">Особистий кабінет</h1>
+<nav class="tabs-nav"><a href="/account" class="active" data-testid="account-profile-tab">Профіль</a> <a href="/account/orders" data-testid="account-orders-tab">Мої замовлення</a></nav>
+<form method="post" action="/account" class="form narrow" novalidate data-testid="profile-form">
+  <%- include('partials/field', { name: 'name', label: "Ім'я" }) %>
+  <div class="field"><label for="f-email-ro">Email</label><input id="f-email-ro" type="email" value="<%= user.email %>" disabled data-testid="profile-email"></div>
+  <%- include('partials/field', { name: 'phone', label: 'Телефон', type: 'tel', placeholder: '+380XXXXXXXXX' }) %>
+  <button type="submit" data-testid="profile-save">Зберегти</button>
+</form>
+<%- include('partials/footer') %>

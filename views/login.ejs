@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+<div class="auth-box">
+  <h1 data-testid="page-title">Вхід</h1>
+  <% if (errors._form) { %><div class="alert alert-error" role="alert" data-testid="login-error"><%= errors._form %></div><% } %>
+  <form method="post" action="/login" class="form" novalidate data-testid="login-form">
+    <input type="hidden" name="next" value="<%= form.next || '' %>">
+    <%- include('partials/field', { name: 'email', label: 'Email', type: 'email', autocomplete: 'username' }) %>
+    <div class="field <%= errors.password ? 'has-error' : '' %>">
+      <label for="f-password">Пароль</label>
+      <div class="password-wrap">
+        <input id="f-password" name="password" type="password" autocomplete="current-password" data-testid="input-password">
+        <button type="button" class="link toggle-password" data-target="f-password" data-testid="toggle-password">Показати</button>
+      </div>
+      <% if (errors.password) { %><p class="field-error" data-testid="error-password"><%= errors.password %></p><% } %>
+    </div>
+    <button type="submit" class="btn block" data-testid="login-submit">Увійти</button>
+  </form>
+  <p>Немає облікового запису? <a href="/register" data-testid="go-register">Зареєструватися</a></p>
+</div>
+<%- include('partials/footer') %>

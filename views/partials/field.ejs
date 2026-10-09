@@ -1,0 +1,8 @@
+<div class="field <%= errors[name] ? 'has-error' : '' %>">
+  <label for="f-<%= name %>"><%= label %></label>
+  <input id="f-<%= name %>" name="<%= name %>" type="<%= typeof type !== 'undefined' ? type : 'text' %>" value="<%= form[name] || '' %>"
+    <% if (typeof placeholder !== 'undefined') { %>placeholder="<%= placeholder %>"<% } %>
+    <% if (typeof autocomplete !== 'undefined') { %>autocomplete="<%= autocomplete %>"<% } %>
+    aria-invalid="<%= errors[name] ? 'true' : 'false' %>" data-testid="input-<%= name %>">
+  <% if (errors[name]) { %><p class="field-error" data-testid="error-<%= name %>"><%= errors[name] %></p><% } %>
+</div>

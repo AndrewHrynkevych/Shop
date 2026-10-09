@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="site-header" data-testid="header">
+  <div class="container header-row">
+    <a href="/" class="logo" data-testid="logo">🛒 Demo Shop</a>
+    <form action="/catalog" method="get" class="search" role="search" data-testid="search-form">
+      <input type="search" name="q" value="<%= q %>" placeholder="Пошук товарів…" aria-label="Пошук товарів" data-testid="search-input">
+      <button type="submit" data-testid="search-button">Знайти</button>
+    </form>
+    <nav class="user-nav" aria-label="Обліковий запис">
+      <% if (user) { %>
+        <a href="/account" data-testid="account-link">👤 <span data-testid="user-name"><%= user.name %></span></a>
+        <a href="/account/orders" data-testid="orders-link">Мої замовлення</a>
+        <form action="/logout" method="post" class="inline"><button type="submit" class="link" data-testid="logout-button">Вийти</button></form>
+      <% } else { %>
+        <a href="/login" data-testid="login-link">Увійти</a>
+        <a href="/register" data-testid="register-link">Реєстрація</a>
+      <% } %>
+      <a href="/cart" class="cart-link" data-testid="cart-link" aria-label="Кошик">🛍️ Кошик <span class="badge" data-testid="cart-count"><%= cartCount %></span></a>
+    </nav>
+  </div>
+  <nav class="container cat-nav" aria-label="Категорії" data-testid="category-nav">
+    <a href="/catalog" data-testid="nav-all">Усі товари</a>
+    <% categories.forEach(c => { %>
+      <a href="/catalog?category=<%= c.slug %>" data-testid="nav-<%= c.slug %>"><%= c.name %></a>
+    <% }) %>
+  </nav>
+</header>
+<div id="toasts" class="toasts" aria-live="polite" data-testid="toasts"></div>
+<main class="container" id="main">
+<% if (flash) { %>
+  <div class="alert alert-<%= flash.type %>" role="<%= flash.type === 'error' ? 'alert' : 'status' %>" data-testid="flash-message"><%= flash.text %></div>
+<% } %>

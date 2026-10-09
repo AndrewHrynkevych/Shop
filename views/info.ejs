@@ -1,0 +1,14 @@
+<%- include('partials/header') %>
+<h1 data-testid="page-title"><%= title %></h1>
+<% if (page === 'about') { %>
+  <p>Demo Shop — навчальний інтернет-магазин. Тут можна безпечно тренувати UI- та API-автотести: всі дані вигадані, оплата не справжня.</p>
+<% } else if (page === 'delivery') { %>
+  <table class="specs" data-testid="delivery-table">
+    <% Object.values(DELIVERY).forEach(d => { %><tr><th><%= d.label %></th><td><%= d.price ? formatPrice(d.price) : 'безкоштовно' %></td></tr><% }) %>
+  </table>
+  <p>Безкоштовна доставка для замовлень від <%= formatPrice(FREE_SHIPPING_FROM) %>. Оплата карткою онлайн або готівкою при отриманні.</p>
+<% } else { %>
+  <p>Телефон: <a href="tel:+380800000000">0 800 000 000</a> · Email: <a href="mailto:support@shop.test">support@shop.test</a></p>
+  <ul><% STORES.forEach(s => { %><li><%= s %></li><% }) %></ul>
+<% } %>
+<%- include('partials/footer') %>

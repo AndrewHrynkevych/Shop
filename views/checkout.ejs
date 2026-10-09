@@ -1,0 +1,76 @@
+<%- include('partials/header') %>
+<h1 data-testid="page-title">Оформлення замовлення</h1>
+<% if (errors._form) { %><div class="alert alert-error" role="alert" data-testid="form-error"><%= errors._form %></div><% } %>
+<% if (Object.keys(errors).filter(k => k !== '_form').length) { %>
+  <div class="alert alert-error" role="alert" data-testid="validation-summary">Перевірте правильність заповнення форми</div>
+<% } %>
+<div class="cart-layout">
+  <form method="post" action="/checkout" class="form" id="checkout-form" novalidate data-testid="checkout-form">
+    <fieldset>
+      <legend>Контактні дані</legend>
+      <%- include('partials/field', { name: 'name', label: "Ім'я та прізвище", autocomplete: 'name' }) %>
+      <%- include('partials/field', { name: 'email', label: 'Email', type: 'email', autocomplete: 'email' }) %>
+      <%- include('partials/field', { name: 'phone', label: 'Телефон', type: 'tel', placeholder: '+380XXXXXXXXX', autocomplete: 'tel' }) %>
+    </fieldset>
+    <fieldset data-testid="delivery-options">
+      <legend>Доставка</legend>
+      <% Object.entries(DELIVERY).forEach(([k, d]) => { %>
+        <label class="radio"><input type="radio" name="delivery" value="<%= k %>" data-price="<%= d.price %>" <%= form.delivery === k ? 'checked' : '' %> data-testid="delivery-<%= k %>"> <%= d.label %> — <%= d.price ? formatPrice(d.price) : 'безкоштовно' %></label>
+      <% }) %>
+      <% if (errors.delivery) { %><p class="field-error" data-testid="error-delivery"><%= errors.delivery %></p><% } %>
+      <p class="muted">Безкоштовна доставка від <%= formatPrice(FREE_SHIPPING_FROM) %>.</p>
+      <div data-show-for="courier post">
+        <%- include('partials/field', { name: 'city', label: 'Місто' }) %>
+      </div>
+      <div data-show-for="courier">
+        <%- include('partials/field', { name: 'address', label: 'Адреса (вулиця, будинок, квартира)' }) %>
+      </div>
+      <div data-show-for="post">
+        <%- include('partials/field', { name: 'postOffice', label: 'Номер відділення', type: 'text' }) %>
+      </div>
+      <div data-show-for="pickup" class="field <%= errors.store ? 'has-error' : '' %>">
+        <label for="f-store">Магазин</label>
+        <select id="f-store" name="store" data-testid="input-store">
+          <option value="">Оберіть магазин</option>
+          <% STORES.forEach(s => { %><option <%= form.store === s ? 'selected' : '' %>><%= s %></option><% }) %>
+        </select>
+        <% if (errors.store) { %><p class="field-error" data-testid="error-store"><%= errors.store %></p><% } %>
+      </div>
+    </fieldset>
+    <fieldset data-testid="payment-options">
+      <legend>Оплата</legend>
+      <label class="radio"><input type="radio" name="payment" value="card" <%= form.payment === 'card' ? 'checked' : '' %> data-testid="payment-card"> Карткою онлайн</label>
+      <label class="radio"><input type="radio" name="payment" value="cash" <%= form.payment === 'cash' ? 'checked' : '' %> data-testid="payment-cash"> Готівкою при отриманні</label>
+      <% if (errors.payment) { %><p class="field-error" data-testid="error-payment"><%= errors.payment %></p><% } %>
+      <div data-show-for-payment="card" class="card-fields" data-testid="card-fields">
+        <%- include('partials/field', { name: 'cardNumber', label: 'Номер картки', placeholder: '0000 0000 0000 0000', autocomplete: 'cc-number' }) %>
+        <div class="two-cols">
+          <%- include('partials/field', { name: 'cardExpiry', label: 'Термін дії', placeholder: 'ММ/РР', autocomplete: 'cc-exp' }) %>
+          <%- include('partials/field', { name: 'cardCvv', label: 'CVV', type: 'password', placeholder: '123', autocomplete: 'cc-csc' }) %>
+        </div>
+      </div>
+    </fieldset>
+    <div class="field">
+      <label for="f-comment">Коментар до замовлення</label>
+      <textarea id="f-comment" name="comment" rows="3" maxlength="600" data-testid="input-comment"><%= form.comment || '' %></textarea>
+      <% if (errors.comment) { %><p class="field-error" data-testid="error-comment"><%= errors.comment %></p><% } %>
+    </div>
+    <label class="checkbox"><input type="checkbox" name="terms" value="1" <%= form.terms ? 'checked' : '' %> data-testid="input-terms"> Я погоджуюся з умовами використання та обробкою персональних даних</label>
+    <% if (errors.terms) { %><p class="field-error" data-testid="error-terms"><%= errors.terms %></p><% } %>
+    <button type="submit" class="btn block" id="place-order" data-testid="place-order">Підтвердити замовлення</button>
+  </form>
+  <aside class="summary" data-testid="order-summary" data-subtotal="<%= summary.subtotal %>" data-discount="<%= summary.discount %>" data-free-from="<%= FREE_SHIPPING_FROM %>" data-free-shipping-promo="<%= summary.promo && summary.promo.type === 'shipping' ? 1 : 0 %>">
+    <h2>Ваше замовлення</h2>
+    <ul class="mini-items">
+      <% summary.items.forEach(i => { %><li data-testid="summary-item"><span><%= i.product.name %> × <%= i.qty %></span><span><%= formatPrice(i.lineTotal) %></span></li><% }) %>
+    </ul>
+    <dl>
+      <dt>Сума:</dt><dd data-testid="summary-subtotal" data-price="<%= summary.subtotal %>"><%= formatPrice(summary.subtotal) %></dd>
+      <% if (summary.discount) { %><dt>Знижка (<%= summary.promo.code %>):</dt><dd data-testid="summary-discount">−<%= formatPrice(summary.discount) %></dd><% } %>
+      <dt>Доставка:</dt><dd data-testid="summary-shipping" data-price="<%= summary.shipping %>"><%= summary.shipping ? formatPrice(summary.shipping) : 'безкоштовно' %></dd>
+      <dt class="total">До сплати:</dt><dd class="total" data-testid="summary-total" data-price="<%= summary.total %>"><%= formatPrice(summary.total) %></dd>
+    </dl>
+    <a href="/cart" data-testid="back-to-cart">← Повернутися до кошика</a>
+  </aside>
+</div>
+<%- include('partials/footer') %>

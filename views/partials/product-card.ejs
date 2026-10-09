@@ -1,0 +1,15 @@
+<article class="card" data-testid="product-card" data-product-id="<%= p.id %>">
+  <a href="/product/<%= p.id %>" class="card-img"><img src="/img/product/<%= p.id %>.svg" alt="<%= p.name %>" width="400" height="300" loading="lazy"></a>
+  <% if (p.oldPrice) { %><span class="tag sale" data-testid="sale-badge">−<%= Math.round((1 - p.price / p.oldPrice) * 100) %>%</span><% } %>
+  <h3 class="card-title"><a href="/product/<%= p.id %>" data-testid="product-name"><%= p.name %></a></h3>
+  <div class="card-meta"><span data-testid="product-brand"><%= p.brand %></span> · <span data-testid="product-rating" aria-label="Рейтинг <%= p.rating %>">★ <%= p.rating.toFixed(1) %></span></div>
+  <div class="price-row">
+    <span class="price" data-testid="product-price" data-price="<%= p.price %>"><%= formatPrice(p.price) %></span>
+    <% if (p.oldPrice) { %><s class="old-price" data-testid="product-old-price"><%= formatPrice(p.oldPrice) %></s><% } %>
+  </div>
+  <% if (p.stock > 0) { %>
+    <button type="button" class="add-to-cart" data-testid="add-to-cart" data-product-id="<%= p.id %>">У кошик</button>
+  <% } else { %>
+    <button type="button" disabled data-testid="out-of-stock">Немає в наявності</button>
+  <% } %>
+</article>
