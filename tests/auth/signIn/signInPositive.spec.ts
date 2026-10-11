@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { SignInPage } from '../../../src/pages/signIn';
 
 test.describe('SignInPositive', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
+    await new SignInPage(page).goto();
   });
 
   test('log in with valid credentials', async ({ page }) => {
-    await page.getByTestId('input-email').fill('user@shop.test');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('login-submit').click();
+    const signInPage = new SignInPage(page);
+
+    await signInPage.login('user@shop.test', 'Password123');
     await expect(page).toHaveURL('/account');
     await expect(page.getByTestId('page-title')).toHaveText('Особистий кабінет');
   });
