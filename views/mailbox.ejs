@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<h1 data-testid="page-title">Демо-пошта</h1>
+<p class="muted">Тут зберігаються листи, які магазин «надіслав» би користувачам. Скринька очищується після перезапуску сервера або <code>POST /api/test/reset</code>.</p>
+<% if (!mails.length) { %>
+  <div class="empty" data-testid="mailbox-empty"><p>Листів поки немає.</p></div>
+<% } else { %>
+  <% mails.forEach(m => { %>
+    <div class="card" data-testid="mail-item" data-mail-to="<%= m.to %>">
+      <strong data-testid="mail-subject"><%= m.subject %></strong>
+      <span class="card-meta">Кому: <span data-testid="mail-to"><%= m.to %></span></span>
+      <p>Щоб задати новий пароль, перейдіть за посиланням: <a href="<%= m.link %>" data-testid="mail-reset-link">Змінити пароль</a></p>
+    </div>
+  <% }) %>
+<% } %>
+<%- include('partials/footer') %>

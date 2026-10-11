@@ -26,6 +26,7 @@ const formatDate = (iso) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^\+380\d{9}$/;
+const passwordError = (pw) => (pw.length < 8 || !/[A-Za-zА-Яа-яІіЇїЄєҐґ]/.test(pw) || !/\d/.test(pw) ? 'Пароль: мінімум 8 символів, літери та цифри' : null);
 
 function parseCookies(header = '') {
   const out = {};
@@ -523,6 +524,71 @@ app.post('/logout', (req, res) => {
   res.redirect('/');
 });
 
+// ---------- Відновлення пароля ----------
+// Листи насправді не надсилаються: вони потрапляють у демо-скриньку /mailbox.
+
+const RESET_TTL_MS = 30 * 60 * 1000;
+const resetTokens = new Map(); // token -> { userId, expiresAt }
+const mailbox = [];
+
+function findResetToken(token) {
+  const entry = resetTokens.get(token);
+  if (!entry || entry.expiresAt < Date.now()) return null;
+  return entry;
+}
+
+app.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', { title: 'Відновлення пароля', form: {}, errors: {}, sent: false });
+});
+
+app.post('/forgot-password', async (req, res) => {
+  await sleep(LATENCY_MS);
+  const email = (req.body.email || '').trim().toLowerCase();
+  const errors = {};
+  if (!email) errors.email = 'Введіть email';
+  else if (!EMAIL_RE.test(email)) errors.email = 'Вкажіть коректний email';
+  if (errors.email) return res.status(422).render('forgot-password', { title: 'Відновлення пароля', form: req.body, errors, sent: false });
+
+  // Відповідь однакова для будь-якого email, щоб не розкривати, чи він зареєстрований
+  const user = db().users.find((u) => u.email === email);
+  if (user) {
+    for (const [t, entry] of resetTokens) if (entry.userId === user.id) resetTokens.delete(t);
+    const token = crypto.randomBytes(24).toString('hex');
+    resetTokens.set(token, { userId: user.id, expiresAt: Date.now() + RESET_TTL_MS });
+    mailbox.unshift({
+      id: mailbox.length + 1, to: user.email, subject: 'Відновлення пароля',
+      link: `/reset-password/${token}`, sentAt: new Date().toISOString(),
+    });
+  }
+  res.render('forgot-password', { title: 'Відновлення пароля', form: { email }, errors: {}, sent: true });
+});
+
+app.get('/reset-password/:token', (req, res) => {
+  if (!findResetToken(req.params.token)) return res.status(400).render('reset-password', { title: 'Новий пароль', token: null, errors: {} });
+  res.render('reset-password', { title: 'Новий пароль', token: req.params.token, errors: {} });
+});
+
+app.post('/reset-password/:token', (req, res) => {
+  const entry = findResetToken(req.params.token);
+  const user = entry && db().users.find((u) => u.id === entry.userId);
+  if (!user) return res.status(400).render('reset-password', { title: 'Новий пароль', token: null, errors: {} });
+  const pw = req.body.password || '';
+  const errors = {};
+  if (passwordError(pw)) errors.password = passwordError(pw);
+  if (pw !== req.body.confirmPassword) errors.confirmPassword = 'Паролі не збігаються';
+  if (Object.keys(errors).length) return res.status(422).render('reset-password', { title: 'Новий пароль', token: req.params.token, errors });
+
+  user.password = hashPassword(pw);
+  resetTokens.delete(req.params.token);
+  save();
+  setFlash(req, 'success', 'Пароль змінено. Увійдіть з новим паролем.');
+  res.redirect('/login');
+});
+
+app.get('/mailbox', (req, res) => {
+  res.render('mailbox', { title: 'Демо-пошта', mails: mailbox });
+});
+
 app.get('/register', (req, res) => {
   if (req.user) return res.redirect('/account');
   res.render('register', { title: 'Реєстрація', form: {}, errors: {} });
@@ -538,7 +604,7 @@ app.post('/register', (req, res) => {
   else if (db().users.some((u) => u.email === email)) errors.email = 'Користувач з таким email вже існує';
   if (b.phone && !PHONE_RE.test(b.phone.trim())) errors.phone = 'Телефон у форматі +380XXXXXXXXX';
   const pw = b.password || '';
-  if (pw.length < 8 || !/[A-Za-zА-Яа-яІіЇїЄєҐґ]/.test(pw) || !/\d/.test(pw)) errors.password = 'Пароль: мінімум 8 символів, літери та цифри';
+  if (passwordError(pw)) errors.password = passwordError(pw);
   if (pw !== b.confirmPassword) errors.confirmPassword = 'Паролі не збігаються';
   if (!b.terms) errors.terms = 'Потрібно погодитися з умовами';
   if (Object.keys(errors).length) return res.status(422).render('register', { title: 'Реєстрація', form: b, errors });
@@ -678,9 +744,13 @@ app.get('/api/orders', requireAuth, (req, res) => {
 });
 
 // Скидання бази до початкового стану (виклик у beforeEach / globalSetup)
+app.get('/api/test/mailbox', (req, res) => res.json(mailbox));
+
 app.post('/api/test/reset', (req, res) => {
   reset();
   sessions.clear();
+  resetTokens.clear();
+  mailbox.length = 0;
   res.json({ ok: true });
 });
 

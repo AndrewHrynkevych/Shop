@@ -98,6 +98,8 @@ npm run test:ui                   # UI-режим Playwright
 | `/checkout` | оформлення замовлення |
 | `/order/:id/success` | підтвердження замовлення |
 | `/login`, `/register` | вхід (підтримує `?next=/шлях`), реєстрація |
+| `/forgot-password`, `/reset-password/:token` | відновлення пароля: запит посилання та форма нового пароля |
+| `/mailbox` | демо-пошта: сюди потрапляють «надіслані» листи з посиланням для зміни пароля |
 | `/account` | профіль (редагування імені й телефону) |
 | `/account/orders`, `/account/orders/:id` | історія замовлень, деталі, скасування |
 | `/about`, `/delivery`, `/contacts` | статичні сторінки |
@@ -115,6 +117,7 @@ npm run test:ui                   # UI-режим Playwright
 - товар: `product-details`, `product-title`, `stock-status`, `qty-input`, `qty-increase`, `qty-decrease`, `tab-description|specs|reviews`, `review-form`;
 - кошик: `cart-item`, `cart-item-qty`, `cart-item-remove`, `promo-input`, `promo-apply`, `summary-subtotal`, `summary-discount`, `summary-total`, `checkout-button`, `empty-cart`;
 - форми: поля `input-<name>`, помилки `error-<name>`, загальна помилка `form-error` / `login-error`, `validation-summary`;
+- відновлення пароля: `forgot-password-link`, `forgot-form`, `forgot-submit`, `reset-sent`, `go-mailbox`, `mail-item` (атрибут `data-mail-to`), `mail-reset-link`, `reset-form`, `reset-submit`, `reset-invalid`;
 - повідомлення: `flash-message` (після перезавантаження сторінки), `toast` (спливає після дій через API), `cookie-banner`, `cookie-accept`.
 
 Ціни в тексті мають звичайний пробіл як роздільник тисяч: `12 999 грн`.
@@ -126,6 +129,7 @@ npm run test:ui                   # UI-режим Playwright
 - **Однакові `data-testid`** у різних місцях (наприклад, `add-to-cart` на сторінці товару й у «Схожих товарах»), тож доведеться звужувати локатори.
 - **Нативні `confirm`-діалоги** при очищенні кошика й скасуванні замовлення (`page.on('dialog')`).
 - **Динамічні поля** у формі оформлення залежно від доставки й оплати.
+- **Відновлення пароля без справжньої пошти**: лист з'являється на сторінці `/mailbox` (і в `GET /api/test/mailbox`). Посилання одноразове, діє 30 хвилин, новий запит скасовує попереднє. Відповідь на запит однакова для зареєстрованого й незареєстрованого email.
 - **Сесія в cookie `sid`**, тож можна зберегти стан входу через `storageState`.
 
 ## JSON API
@@ -143,6 +147,7 @@ npm run test:ui                   # UI-режим Playwright
 | `POST /api/logout` | вихід |
 | `GET /api/me` | поточний користувач (401 без входу) |
 | `GET /api/orders` | замовлення поточного користувача |
-| `POST /api/test/reset` | скинути базу до початкового стану |
+| `GET /api/test/mailbox` | листи з демо-пошти (`to`, `subject`, `link`), найновіший перший |
+| `POST /api/test/reset` | скинути базу до початкового стану, очистити демо-пошту й посилання для зміни пароля |
 
 `page.request` ділить cookie зі сторінкою, тож через API зручно готувати стан (увійти, наповнити кошик), а UI перевіряти лише там, де треба.
