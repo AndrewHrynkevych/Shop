@@ -13,7 +13,7 @@ button:disabled { background: #9ca3af; cursor: not-allowed; }
 button.secondary, .btn.secondary { background: #fff; color: #111827; border: 1px solid var(--border); }
 button.link { background: none; color: var(--accent); padding: 0; }
 button.link.danger, .danger.link { color: var(--danger); }
-.btn.danger, button.danger { background: var(--danger); }
+.btn.danger, button.danger:not(.link) { background: var(--danger); }
 .block { display: block; width: 100%; }
 .inline { display: inline; }
 .muted { color: var(--muted); font-size: 13px; }
