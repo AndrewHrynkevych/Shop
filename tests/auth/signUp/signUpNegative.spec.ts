@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import {faker} from '@faker-js/faker';
 
 test.describe('SignUpNegative', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,8 +15,16 @@ test.describe('SignUpNegative', () => {
     await expect(page.getByTestId('error-password')).toContainText('Пароль: мінімум 8 символів, літери та цифри');
   });
 
+  test('show validation for different entered passwords', async ({ page }) => {
+    await page.getByTestId('input-name').fill(faker.person.firstName());
+    await page.getByTestId('input-email').fill(faker.internet.email());
+    await page.getByTestId('input-password').fill('Password123');
+    await page.getByTestId('input-confirmPassword').fill('Password1234');
+  });
+
+
   test('show error when email has already registered', async ({ page }) => {
-    await page.getByTestId('input-name').fill('Test User');
+    await page.getByTestId('input-name').fill(faker.person.firstName());
     await page.getByTestId('input-email').fill('user@shop.test');
     await page.getByTestId('input-password').fill('Password123');
     await page.getByTestId('input-confirmPassword').fill('Password123');
@@ -26,10 +35,11 @@ test.describe('SignUpNegative', () => {
   });
 
   test('show reject invalid email format', async ({ page }) => {
-    await page.getByTestId('input-name').fill('Test User');
+    await page.getByTestId('input-name').fill(faker.person.firstName());
     await page.getByTestId('input-email').fill('newuser');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('input-confirmPassword').fill('Password123');
+    const password = faker.internet.password();
+    await page.getByTestId('input-password').fill(password);
+    await page.getByTestId('input-confirmPassword').fill(password);
     await page.getByTestId('input-terms').check();
     await page.getByTestId('register-submit').click();
     await expect(page).toHaveURL('/register');
@@ -50,9 +60,9 @@ test.describe('SignUpNegative', () => {
 
   test('show validation error when name has less than 2 symbols', async ({ page }) => {
     await page.getByTestId('input-name').fill('T');
-    await page.getByTestId('input-email').fill('newuser@shop.test');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('input-confirmPassword').fill('Password123');
+    await page.getByTestId('input-email').fill(faker.internet.email());
+    await page.getByTestId('input-password').fill(faker.internet.password());
+    await page.getByTestId('input-confirmPassword').fill(faker.internet.password());
     await page.getByTestId('input-terms').check();
     await page.getByTestId('register-submit').click();
     await expect(page).toHaveURL('/register');

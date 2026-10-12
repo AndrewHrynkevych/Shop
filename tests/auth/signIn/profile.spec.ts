@@ -24,6 +24,5 @@ test.describe('Profile', () => {
     await page.getByTestId('login-submit').click();
     await page.getByTestId('account-orders-tab').click();
     await expect(page).toHaveURL('/account/orders');
-});
-
+  });
 });
