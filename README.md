@@ -1,153 +1,90 @@
-# Demo Shop — інтернет-магазин для тренування автотестів на Playwright
+# Playwright E2E Test Automation — Demo Shop
 
-Навчальний магазин з усіма типовими сценаріями: каталог, пошук, фільтри, сортування, пагінація, картка товару, кошик, промокоди, оформлення замовлення з валідацією, реєстрація, вхід, особистий кабінет та історія замовлень. Усі дані вигадані, оплата несправжня, зовнішніх сервісів немає.
+![Playwright Tests](https://github.com/AndrewHrynkevych/shop/actions/workflows/playwright.yml/badge.svg)
 
-## Запуск
+End-to-end test automation framework for a demo e-commerce shop, built with Playwright and the Page Object Model. The suite has 66 tests covering authentication, catalog, cart, checkout and orders, and runs on every push in GitHub Actions.
 
-Потрібен Node.js 18+.
+![HTML report](docs/report.png)
+
+## Tech stack
+
+- [Playwright Test](https://playwright.dev/) — test runner, assertions, HTML report
+- JavaScript / TypeScript
+- Page Object Model
+- [Faker](https://fakerjs.dev/) — generated test data
+- GitHub Actions — CI
+
+## What is covered
+
+| Area | Tests | Scenarios |
+|---|---|---|
+| Sign in | 5 | valid login, empty email, empty password, wrong password, blocked user |
+| Sign up | 6 | valid registration, empty fields, password mismatch, existing email, invalid email, short name |
+| Password reset | 4 | reset email, new password via link, unregistered email, empty email |
+| Profile | 2 | update personal info, open order history |
+| Catalog | 14 | search, filters, sorting, product page, breadcrumbs |
+| Cart | 6 | quantity, remove, clear, stock limit, reload, guest cart merge after login |
+| Promo codes | 4 | valid, invalid, expired, below minimum order amount |
+| Checkout | 9 | field validation, delivery methods, card payment, declined card, double click, confirmation page |
+| Orders | 3 | new order in history, cancel order, stock decrease after purchase |
+| Smoke | 9 | critical path, including guest and logged-in purchase end to end |
+| Health | 4 | home page, products API, cart API, static assets |
+
+Three of these tests are marked `test.fixme` because the shop does not have the feature yet (product variants, 3DS payment, order confirmation email). Each one has a comment explaining why.
+
+## Project structure
+
+```
+src/pages/        page objects, one class per page
+  signIn.js  signUp.js  passwordReset.js  account.js
+  header.js  catalog.js  product.js
+  cart.js  checkout.js  orders.js
+tests/            specs, grouped by feature
+  auth/  catalog/  cart/  checkout/  orders/  smoke/  health/
+playwright.config.js
+.github/workflows/playwright.yml
+```
+
+## How the tests are written
+
+- **Page objects hold locators and actions.** Each class defines its locators in the constructor and exposes one method per user action, such as `enterEmail()` or `clickSubmitButton()`.
+- **Specs hold scenarios and assertions.** A test reads as a list of steps followed by `expect` checks.
+- **Every test starts from a clean state.** `beforeEach` resets the database through `POST /api/test/reset`.
+- **Preconditions go through the API.** Filling the cart or logging in before the scenario under test is done with `page.request`, so the UI is exercised only where it matters.
+- **Locators use `data-testid`.**
+
+Example:
+
+```ts
+test('show validation on login when password was wrong', async ({ page }) => {
+  await signInPage.enterEmail('user@shop.test');
+  await signInPage.enterPassword('Password1234');
+  await signInPage.clickSubmitButton();
+
+  await expect(page.getByTestId('login-error')).toHaveText('Невірний email або пароль');
+  await expect(page).toHaveURL('/login');
+});
+```
+
+## How to run
+
+Requires Node.js 18+.
 
 ```bash
 npm install
-npm start            # http://localhost:3000
+npx playwright install chromium   # once
+npm test                          # the shop server starts automatically
+npm run test:ui                   # Playwright UI mode
+npx playwright test --grep @smoke # smoke tests only
+npx playwright show-report        # open the HTML report
 ```
 
-Змінні середовища:
+## Continuous integration
 
-| Змінна | За замовчуванням | Що робить |
-|---|---|---|
-| `PORT` | `3000` | порт сервера |
-| `LATENCY_MS` | `400` | штучна затримка для API кошика, входу та оплати (поставте `0`, щоб прибрати, або `2000`, щоб потренувати очікування) |
-| `DB_FILE` | `data/db.json` | файл бази даних |
+[The workflow](.github/workflows/playwright.yml) runs the full suite on every push and pull request to `main`, and uploads the HTML report as an artifact.
 
-## Запуск тестів
+## About the application under test
 
-```bash
-npx playwright install chromium   # один раз
-npm test                          # сервер стартує автоматично
-npm run test:ui                   # UI-режим Playwright
-```
+The shop is a small Node.js app (Express + EJS) that lives in this repository and exists for practising test automation: all data is fictional and the payment is simulated. Its interface is in Ukrainian, which is why expected texts in the assertions are Ukrainian.
 
-Папка `tests/` порожня — створюйте в ній свої файли `*.spec.js`. `playwright.config.js` уже налаштований: `baseURL`, `testIdAttribute: 'data-testid'`, автозапуск сервера.
-
-## Скидання даних
-
-База — файл `data/db.json`. Повернути її до початкового стану можна:
-
-- з тестів: `await request.post('/api/test/reset')` (наприклад, у `beforeEach`);
-- з терміналу: `npm run reset`.
-
-Скидання також очищує всі сесії (кошики гостей, авторизацію).
-
-## Тестові дані
-
-**Користувачі** (пароль у всіх `Password123`):
-
-| Email | Особливість |
-|---|---|
-| `user@shop.test` | звичайний користувач, замовлень немає |
-| `buyer@shop.test` | має 2 замовлення (одне «Доставлено», одне «Нове» — його можна скасувати) |
-| `locked@shop.test` | заблокований — вхід показує помилку |
-
-**Промокоди:**
-
-| Код | Ефект |
-|---|---|
-| `SAVE10` | −10% від суми |
-| `MINUS200` | −200 грн, лише при сумі від 1 000 грн |
-| `FREESHIP` | безкоштовна доставка |
-| `EXPIRED2025` | помилка «Термін дії промокоду минув» |
-| будь-який інший | помилка «Промокод не знайдено» |
-
-Регістр коду не важливий (`save10` теж спрацює).
-
-**Банківські картки** (термін дії — будь-який майбутній, CVV — будь-які 3 цифри):
-
-| Номер | Результат |
-|---|---|
-| `4242 4242 4242 4242` | успішна оплата |
-| `4000 0000 0000 0002` | «Платіж відхилено банком» |
-| `1234 5678 9012 3456` | не проходить перевірку Луна — помилка валідації |
-
-**Товари:** 50 шт. у 5 категоріях (по 10), id 1–50. Корисні для тестів:
-
-- немає в наявності: id 4, 17, 27, 34, 46;
-- мало залишку (≤5): id 5, 6, 20, 30, 43 — ліміт кількості в кошику = залишок (і не більше 10 шт. на товар);
-- зі знижкою (є стара ціна): id 1, 3, 5, 8, 12, 14, 18, 20, 21, 24, 27, 32, 37, 42, 43, 48;
-- з відгуками: id 1 (2 відгуки), 31 (1 відгук).
-
-## Бізнес-правила
-
-- Доставка: кур'єр 100 грн, відділення пошти 60 грн, самовивіз безкоштовно. Від 3 000 грн (після знижки) доставка безкоштовна.
-- Кур'єр вимагає місто й адресу, пошта — місто й номер відділення, самовивіз — вибір магазину. Поля перемикаються динамічно.
-- Оплата карткою вимагає номер (16 цифр, перевірка Луна), термін дії `ММ/РР` (не прострочений), CVV (3 цифри). Номер картки й термін автоматично форматуються під час введення.
-- Телефон: формат `+380XXXXXXXXX`.
-- Пароль при реєстрації: від 8 символів, обов'язково літери й цифри; email має бути унікальним.
-- Кошик гостя зливається з кошиком користувача після входу чи реєстрації.
-- Оформлювати замовлення можна і гостем, і авторизованим (тоді поля підставляються з профілю).
-- Скасувати можна лише замовлення в статусі «Нове»; товар повертається на склад.
-- Відгуки можуть залишати лише авторизовані користувачі (оцінка 1–5, текст 10–1000 символів).
-
-## Сторінки
-
-| URL | Що там |
-|---|---|
-| `/` | головна: категорії, акції, популярне |
-| `/catalog` | каталог. Параметри: `q`, `category`, `brand` (можна кілька), `minPrice`, `maxPrice`, `minRating`, `inStock=1`, `onSale=1`, `sort` (`popular`, `price_asc`, `price_desc`, `name_asc`, `newest`), `page` (12 товарів на сторінку) |
-| `/product/:id` | картка товару: кількість −/+, вкладки «Опис / Характеристики / Відгуки», схожі товари |
-| `/cart` | кошик: зміна кількості, видалення, очищення (з `confirm`-діалогом), промокод |
-| `/checkout` | оформлення замовлення |
-| `/order/:id/success` | підтвердження замовлення |
-| `/login`, `/register` | вхід (підтримує `?next=/шлях`), реєстрація |
-| `/forgot-password`, `/reset-password/:token` | відновлення пароля: запит посилання та форма нового пароля |
-| `/mailbox` | демо-пошта: сюди потрапляють «надіслані» листи з посиланням для зміни пароля |
-| `/account` | профіль (редагування імені й телефону) |
-| `/account/orders`, `/account/orders/:id` | історія замовлень, деталі, скасування |
-| `/about`, `/delivery`, `/contacts` | статичні сторінки |
-
-Захищені сторінки перенаправляють на `/login?next=…`.
-
-## Локатори
-
-Майже кожен значущий елемент має `data-testid`, а в `playwright.config.js` вже вказано `testIdAttribute: 'data-testid'`, тому можна писати `page.getByTestId('add-to-cart')`. Також є нормальні `label`, `role` та `aria-label`, тож можна тренувати `getByRole` / `getByLabel`.
-
-Основні:
-
-- шапка: `search-input`, `search-button`, `cart-link`, `cart-count`, `login-link`, `register-link`, `user-name`, `logout-button`, `nav-<категорія>`;
-- каталог: `product-card` (атрибут `data-product-id`), `product-name`, `product-price` (атрибут `data-price` з числом), `add-to-cart`, `results-count`, `sort-select`, `filter-*`, `apply-filters`, `reset-filters`, `pagination`, `page-next`, `page-prev`, `page-current`, `no-results`;
-- товар: `product-details`, `product-title`, `stock-status`, `qty-input`, `qty-increase`, `qty-decrease`, `tab-description|specs|reviews`, `review-form`;
-- кошик: `cart-item`, `cart-item-qty`, `cart-item-remove`, `promo-input`, `promo-apply`, `summary-subtotal`, `summary-discount`, `summary-total`, `checkout-button`, `empty-cart`;
-- форми: поля `input-<name>`, помилки `error-<name>`, загальна помилка `form-error` / `login-error`, `validation-summary`;
-- відновлення пароля: `forgot-password-link`, `forgot-form`, `forgot-submit`, `reset-sent`, `go-mailbox`, `mail-item` (атрибут `data-mail-to`), `mail-reset-link`, `reset-form`, `reset-submit`, `reset-invalid`;
-- повідомлення: `flash-message` (після перезавантаження сторінки), `toast` (спливає після дій через API), `cookie-banner`, `cookie-accept`.
-
-Ціни в тексті мають звичайний пробіл як роздільник тисяч: `12 999 грн`.
-
-## Що тут свідомо зроблено «як у житті»
-
-- **Cookie-банер** при першому візиті перекриває низ сторінки. Закрити кліком або заздалегідь через `context.addInitScript(() => localStorage.setItem('cookieConsent', 'accepted'))`.
-- **Затримки**: «У кошик», вхід і оплата працюють із затримкою, кнопка тимчасово блокується («Додаємо…», «Обробка платежу…»). Добре для тренування авто-очікувань замість `waitForTimeout`.
-- **Однакові `data-testid`** у різних місцях (наприклад, `add-to-cart` на сторінці товару й у «Схожих товарах»), тож доведеться звужувати локатори.
-- **Нативні `confirm`-діалоги** при очищенні кошика й скасуванні замовлення (`page.on('dialog')`).
-- **Динамічні поля** у формі оформлення залежно від доставки й оплати.
-- **Відновлення пароля без справжньої пошти**: лист з'являється на сторінці `/mailbox` (і в `GET /api/test/mailbox`). Посилання одноразове, діє 30 хвилин, новий запит скасовує попереднє. Відповідь на запит однакова для зареєстрованого й незареєстрованого email.
-- **Сесія в cookie `sid`**, тож можна зберегти стан входу через `storageState`.
-
-## JSON API
-
-| Метод і шлях | Опис |
-|---|---|
-| `GET /api/products` | список товарів, ті самі параметри, що й у `/catalog` |
-| `GET /api/products/:id` | один товар |
-| `GET /api/categories` | категорії |
-| `GET /api/cart` | вміст кошика поточної сесії |
-| `POST /api/cart` `{ productId, qty }` | додати в кошик (201 / 400 / 404) |
-| `PATCH /api/cart/:productId` `{ qty }` | змінити кількість (0 — видалити) |
-| `DELETE /api/cart/:productId` | видалити з кошика |
-| `POST /api/login` `{ email, password }` | вхід (200 / 401) |
-| `POST /api/logout` | вихід |
-| `GET /api/me` | поточний користувач (401 без входу) |
-| `GET /api/orders` | замовлення поточного користувача |
-| `GET /api/test/mailbox` | листи з демо-пошти (`to`, `subject`, `link`), найновіший перший |
-| `POST /api/test/reset` | скинути базу до початкового стану, очистити демо-пошту й посилання для зміни пароля |
-
-`page.request` ділить cookie зі сторінкою, тож через API зручно готувати стан (увійти, наповнити кошик), а UI перевіряти лише там, де треба.
+Test users, promo codes, test cards, business rules and the JSON API are described in [docs/demo-shop.md](docs/demo-shop.md) (in Ukrainian).
