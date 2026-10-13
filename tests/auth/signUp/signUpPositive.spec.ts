@@ -1,19 +1,26 @@
 import { test, expect } from '@playwright/test';
-import {faker} from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
+import { SignUpPage } from '../../../src/pages/signUp';
+
 
 test.beforeEach(async ({ page, request }) => {
   await request.post('/api/test/reset');
-  await page.goto('/register');
+  await new SignUpPage(page).open();
 });
 
 test('sign up with valid credential',  async ({ page }) => {
-  await page.getByTestId('input-name').fill(faker.person.firstName());
-  await page.getByTestId('input-email').fill(faker.internet.email());
-  const password = faker.internet.password();
-  await page.getByTestId('input-password').fill(password);
-  await page.getByTestId('input-confirmPassword').fill(password);
-  await page.getByTestId('input-terms').check();
-  await page.getByTestId('register-submit').click();
+  const signUpPage = new SignUpPage(page);
+  const name = faker.person.firstName();
+  const email = faker.internet.email();
+  const password = faker.internet.password({ length: 12 }) + 'a1';
+
+  await signUpPage.enterName(name);
+  await signUpPage.enterEmail(email);
+  await signUpPage.enterPassword(password);
+  await signUpPage.confirmPassword(password);
+  await signUpPage.checkTermCheckbox();
+  await signUpPage.clickSubmitButton();
+
   await expect(page.getByTestId('flash-message')).toContainText('Реєстрація успішна! Ласкаво просимо.');
   await expect(page).toHaveURL('/account');
 });

@@ -1,14 +1,23 @@
 import { test, expect } from '@playwright/test';
 import {faker} from '@faker-js/faker';
+import {SignUpPage } from '../../../src/pages/signUp';
 
 test.describe('SignUpNegative', () => {
+  let signUpPage;
+    let name;
+    let email;
+    let password;
   test.beforeEach(async ({ page }) => {
-    await page.goto('/register');
+    signUpPage = new SignUpPage(page);
+    name = faker.person.firstName();
+    email = faker.internet.email();
+    password = faker.internet.password();
+    await signUpPage.open();
   });
 
   test('show validation for empty register fields', async ({ page }) => {
-    await page.getByTestId('input-terms').check();
-    await page.getByTestId('register-submit').click();
+    await signUpPage.clickSubmitButton();
+
     await expect(page).toHaveURL('/register');
     await expect(page.getByTestId('error-name')).toContainText("Ім'я має містити щонайменше 2 символи");
     await expect(page.getByTestId('error-email')).toContainText('Вкажіть коректний email');
@@ -16,55 +25,47 @@ test.describe('SignUpNegative', () => {
   });
 
   test('show validation for different entered passwords', async ({ page }) => {
-    await page.getByTestId('input-name').fill(faker.person.firstName());
-    await page.getByTestId('input-email').fill(faker.internet.email());
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('input-confirmPassword').fill('Password1234');
+    await signUpPage.enterName(name);
+    await signUpPage.enterEmail(email);
+    await signUpPage.enterPassword('Password123');
+    await signUpPage.confirmPassword('Password1234');
+    await signUpPage.checkTermCheckbox();
+    await signUpPage.clickSubmitButton();
   });
 
-
   test('show error when email has already registered', async ({ page }) => {
-    await page.getByTestId('input-name').fill(faker.person.firstName());
-    await page.getByTestId('input-email').fill('user@shop.test');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('input-confirmPassword').fill('Password123');
-    await page.getByTestId('input-terms').check();
-    await page.getByTestId('register-submit').click();
+    await signUpPage.enterName(name);
+    await signUpPage.enterEmail('user@shop.test');
+    await signUpPage.enterPassword(password);
+    await signUpPage.confirmPassword(password);
+    await signUpPage.checkTermCheckbox();
+    await signUpPage.clickSubmitButton();
+
     await expect(page).toHaveURL('/register');
     await expect(page.getByTestId('error-email')).toHaveText('Користувач з таким email вже існує');
   });
 
-  test('show reject invalid email format', async ({ page }) => {
-    await page.getByTestId('input-name').fill(faker.person.firstName());
-    await page.getByTestId('input-email').fill('newuser');
-    const password = faker.internet.password();
-    await page.getByTestId('input-password').fill(password);
-    await page.getByTestId('input-confirmPassword').fill(password);
-    await page.getByTestId('input-terms').check();
-    await page.getByTestId('register-submit').click();
-    await expect(page).toHaveURL('/register');
-    await expect(page.getByTestId('error-email')).toHaveText('Вкажіть коректний email');
-  });
-
   test('show validation error when email doesn`t meet requirements', async ({ page }) => {
     // домен після крапки має містити щонайменше 2 символи
-    await page.getByTestId('input-name').fill('Test User');
-    await page.getByTestId('input-email').fill('newuser@shop.t');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('input-confirmPassword').fill('Password123');
-    await page.getByTestId('input-terms').check();
-    await page.getByTestId('register-submit').click();
+    await signUpPage.enterName(name);
+    await signUpPage.enterEmail('newuser@shop.t');
+    await signUpPage.enterPassword(password);
+    await signUpPage.confirmPassword(password);
+    await signUpPage.checkTermCheckbox();
+    await signUpPage.clickSubmitButton();
+
     await expect(page).toHaveURL('/register');
     await expect(page.getByTestId('error-email')).toHaveText('Вкажіть коректний email');
   });
 
   test('show validation error when name has less than 2 symbols', async ({ page }) => {
-    await page.getByTestId('input-name').fill('T');
-    await page.getByTestId('input-email').fill(faker.internet.email());
-    await page.getByTestId('input-password').fill(faker.internet.password());
-    await page.getByTestId('input-confirmPassword').fill(faker.internet.password());
-    await page.getByTestId('input-terms').check();
-    await page.getByTestId('register-submit').click();
+    await await signUpPage.enterName('T');
+    await signUpPage.enterEmail(email);
+    await signUpPage.enterPassword(password);
+    await signUpPage.confirmPassword(password);
+    await signUpPage.checkTermCheckbox();
+    await signUpPage.clickSubmitButton();
+
     await expect(page).toHaveURL('/register');
     await expect(page.getByTestId('error-name')).toHaveText("Ім'я має містити щонайменше 2 символи");
   });

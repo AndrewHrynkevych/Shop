@@ -1,28 +1,38 @@
 import { test, expect } from '@playwright/test';
+import { SignInPage } from '../../../src/pages/signIn';
+import { AccountPage } from '../../../src/pages/account';
 
 test.describe('Profile', () => {
+  let signInPage;
+  let accountPage;
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
+    signInPage = new SignInPage(page);
+    accountPage = new AccountPage(page);
+    await signInPage.open();
   });
 
   test('able to update personal info', async ({ page }) => {
-    await page.getByTestId('input-email').fill('user@shop.test');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('login-submit').click();
+    await signInPage.enterEmail('user@shop.test');
+    await signInPage.enterPassword('Password123');
+    await signInPage.clickSubmitButton();
     await expect(page).toHaveURL('/account');
-    await page.getByTestId('input-name').fill('Updated Customer');
+
+    await accountPage.enterName('Updated Customer');
     await expect(page.getByTestId('profile-email')).toBeDisabled();
-    await page.getByTestId('input-phone').fill('+380507802347');
-    await page.getByTestId('profile-save').click();
+    await accountPage.enterPhone('+380507802347');
+    await accountPage.clickSaveButton();
+
     await expect(page.getByTestId('flash-message')).toBeVisible();
     await expect(page.getByTestId('input-name')).toHaveValue('Updated Customer');
     await expect(page.getByTestId('input-phone')).toHaveValue('+380507802347');
-});
+  });
+
   test('able to check purchases', async ({ page }) => {
-    await page.getByTestId('input-email').fill('user@shop.test');
-    await page.getByTestId('input-password').fill('Password123');
-    await page.getByTestId('login-submit').click();
-    await page.getByTestId('account-orders-tab').click();
+    await signInPage.enterEmail('user@shop.test');
+    await signInPage.enterPassword('Password123');
+    await signInPage.clickSubmitButton();
+
+    await accountPage.clickOrdersTab();
     await expect(page).toHaveURL('/account/orders');
   });
 });

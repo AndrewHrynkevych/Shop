@@ -1,18 +1,5 @@
-import { Page, Locator } from '@playwright/test';
-
-// Сторінка входу: /login
 export class SignInPage {
-  readonly page: Page;
-  readonly emailInput: Locator;
-  readonly passwordInput: Locator;
-  readonly submitButton: Locator;
-  readonly formError: Locator;
-  readonly emailError: Locator;
-  readonly passwordError: Locator;
-  readonly forgotPasswordLink: Locator;
-  readonly registerLink: Locator;
-
-  constructor(page: Page) {
+  constructor(page) {
     this.page = page;
     this.emailInput = page.getByTestId('input-email');
     this.passwordInput = page.getByTestId('input-password');
@@ -24,13 +11,29 @@ export class SignInPage {
     this.registerLink = page.getByTestId('go-register');
   }
 
-  async goto() {
+  async open() {
     await this.page.goto('/login');
   }
 
-  async login(email: string, password: string) {
+  async enterEmail(email) {
+    await this.emailInput.fill(email);
+  }
+
+  async enterPassword(password) {
+    await this.passwordInput.fill(password);
+  }
+
+  async clickSubmitButton() {
+    await this.submitButton.click();
+  }
+
+  async login(email, password) {
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
     await this.submitButton.click();
+  }
+
+  async clickForgotPasswordLink() {
+    await this.forgotPasswordLink.click();
   }
 }

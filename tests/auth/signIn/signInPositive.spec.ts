@@ -3,7 +3,7 @@ import { SignInPage } from '../../../src/pages/signIn';
 
 test.describe('SignInPositive', () => {
   test.beforeEach(async ({ page }) => {
-    await new SignInPage(page).goto();
+    await new SignInPage(page).open();
   });
 
   test('log in with valid credentials', async ({ page }) => {
