@@ -11,7 +11,7 @@ test.describe('SignUpNegative', () => {
     signUpPage = new SignUpPage(page);
     name = faker.person.firstName();
     email = faker.internet.email();
-    password = faker.internet.password();
+    password = faker.internet.password({ length: 12 }) + 'a1';
     await signUpPage.open();
   });
 
@@ -59,7 +59,7 @@ test.describe('SignUpNegative', () => {
   });
 
   test('show validation error when name has less than 2 symbols', async ({ page }) => {
-    await await signUpPage.enterName('T');
+    await signUpPage.enterName('T');
     await signUpPage.enterEmail(email);
     await signUpPage.enterPassword(password);
     await signUpPage.confirmPassword(password);

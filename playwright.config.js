@@ -12,7 +12,6 @@ module.exports = defineConfig({
     testIdAttribute: 'data-testid',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    testIdAttributes: 'data-test'
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
