@@ -9,7 +9,6 @@ export class SignUpPage {
     this.submitButton = page.getByTestId('register-submit');
   }
 
-
   async open() {
     await this.page.goto('/register');
   }

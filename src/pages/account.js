@@ -1,3 +1,5 @@
+import { expect } from "@playwright/test";
+
 export class AccountPage {
   constructor(page) {
     this.page = page;
@@ -6,6 +8,7 @@ export class AccountPage {
     this.profileEmail = page.getByTestId('profile-email');
     this.saveButton = page.getByTestId('profile-save');
     this.ordersTab = page.getByTestId('account-orders-tab');
+    this.pageTitle = page.getByTestId('page-title');
   }
 
   async open() {
@@ -27,4 +30,13 @@ export class AccountPage {
   async clickOrdersTab() {
     await this.ordersTab.click();
   }
+
+  async assertToHaveAccount() {
+    await expect(this.page).toHaveURL('/account');
+  }
+
+  async assertTextMessage() {
+    await expect(this.pageTitle).toHaveText('Особистий кабінет');
+  }
+  
 }

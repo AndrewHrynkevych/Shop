@@ -19,12 +19,12 @@ test.describe('Profile', () => {
 
     await accountPage.enterName('Updated Customer');
     await expect(page.getByTestId('profile-email')).toBeDisabled();
-    await accountPage.enterPhone('+380507802347');
+    await accountPage.enterPhone('+380507802377');
     await accountPage.clickSaveButton();
 
     await expect(page.getByTestId('flash-message')).toBeVisible();
     await expect(page.getByTestId('input-name')).toHaveValue('Updated Customer');
-    await expect(page.getByTestId('input-phone')).toHaveValue('+380507802347');
+    await expect(page.getByTestId('input-phone')).toHaveValue('+380507802377');
   });
 
   test('able to check purchases', async ({ page }) => {
